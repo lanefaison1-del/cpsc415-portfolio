@@ -22,3 +22,6 @@ venv/
 .gradle/
 bin/
 obj/
+
+# build denylist of client and deal names; stays on Lane's Mac only
+.private/

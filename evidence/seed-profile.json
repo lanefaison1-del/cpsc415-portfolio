@@ -1,0 +1,132 @@
+{
+  "person": {
+    "name": "Lane Faison",
+    "headline": "Engineering student at Trinity College who works on aerospace and defense strategy and builds AI tools by directing coding agents.",
+    "education": [
+      {
+        "school": "Trinity College, Hartford, Connecticut",
+        "program": "Engineering major, minor in Formal Organizations",
+        "graduation": "December 2026"
+      },
+      {
+        "school": "Study abroad in Rome, Italy",
+        "program": "One semester",
+        "graduation": "Spring 2025"
+      }
+    ],
+    "languages": ["English", "Italian (functional)"],
+    "personal": ["Spent a semester in Rome and speaks functional Italian.", "Plays tennis; former president of Club Tennis at Trinity."],
+    "background": ["Former president of Club Tennis and of the ASME student chapter at Trinity; serves on the executive board of the Entrepreneurship Club."],
+    "contact": {
+      "email": "lanefaison1@gmail.com",
+      "github": "https://github.com/lanefaison1-del"
+    }
+  },
+  "experience": [
+    {
+      "id": "rsa",
+      "org": "Renaissance Strategic Advisors",
+      "org_description": "A boutique aerospace and defense strategy and M&A advisory firm in the Washington, D.C. area.",
+      "role": "Summer intern",
+      "dates": "Summer 2026",
+      "summary": "Buy-side commercial due diligence and market and revenue modeling on three aerospace and defense acquisitions. Client and deal names are confidential. On one model, cut a contract win-rate assumption after finding that a new-entrant competitor had bid, and defended the change to the partner. Also built two internal AI tools (see project rsa-ai-tools)."
+    },
+    {
+      "id": "hanwha",
+      "org": "Hanwha Aerospace",
+      "org_description": "Aerospace manufacturing.",
+      "role": "Intern",
+      "dates": null,
+      "summary": "When a forging supplier slowdown delayed turbine blades for an engine-maker customer by several weeks, presented the evidence to the customer, explained the supplier renegotiation, and told them up front that the fix would add further delay. Helped roll out standard operating procedures that cut costs."
+    }
+  ],
+  "projects": [
+    {
+      "id": "capstone",
+      "name": "Reusable LN2-cooled reentry heat shield (senior engineering capstone, ENGR 483)",
+      "kind": "team engineering project",
+      "status": "finished",
+      "summary": "Four-person team project to design a lighter or more reusable heat shield than the ablative AVCOAT standard for capsule reentry. The team compared a transpiration-cooled porous lattice against a conical shield cooled by liquid nitrogen flowing through radial pipes, chose the radial-pipe cone, and built a serpentine cooling-channel rig with a thermocouple grid to validate the pipe-flow and conduction models. Lane led the problem framing, the design alternatives and down-select, the final-design justification, and the conclusions.",
+      "annotation": {
+        "what": "A senior design project: a liquid-nitrogen-cooled conical heat shield concept for capsule reentry, plus a test rig that validates its thermal models.",
+        "why": "Capsules have no reusable heat shield; ablatives are single-use. Active LN2 cooling was chosen over transpiration cooling after a trade study.",
+        "breaks": null,
+        "learned": null
+      }
+    },
+    {
+      "id": "rsa-ai-tools",
+      "name": "Firm-knowledge retriever and house-style slide skill (Renaissance Strategic Advisors)",
+      "kind": "internship tool",
+      "status": "shipped",
+      "summary": "Built solo with Claude Code during the RSA internship: (1) a retriever that indexes past engagement material, extracts keywords and summaries, and is queried by an agent at the start of a new engagement to surface relevant prior projects; (2) a slide-building skill trained on sanitized prior firm decks so new slides follow the firm's visual structure.",
+      "annotation": {"what": null, "why": null, "breaks": null, "learned": null}
+    },
+    {
+      "id": "defense-toolkit",
+      "name": "Defense market-research toolkit (Claude skills)",
+      "kind": "personal tools",
+      "status": "shipped",
+      "summary": "A set of Claude skills for defense market research: navigating and extracting line items from DoD budget justification books (J-books); a research workflow that answers program, contract, and budget questions in DACIS; and a company market-profile framework that classifies how a defense company participates in a market across five archetypes, using its role on named programs, its contract tier, and its partnerships, checked against FPDS-NG, SAM.gov, and USAspending.",
+      "annotation": {"what": null, "why": null, "breaks": null, "learned": null}
+    },
+    {
+      "id": "ppt-automation",
+      "name": "PowerPoint automation skills",
+      "kind": "personal tools",
+      "status": "shipped",
+      "summary": "Skills that refresh the numbers behind native PowerPoint charts from a new data table (including the embedded workbooks, growth-rate callouts, and axes) and that align and distribute logos on slides.",
+      "annotation": {"what": null, "why": null, "breaks": null, "learned": null}
+    },
+    {
+      "id": "interview-prep",
+      "name": "Interview-preparation tools",
+      "kind": "personal tools",
+      "status": "shipped",
+      "summary": "A fully editable behavioral-interview flashcard web app for consulting interviews, with interviewer follow-ups two layers deep, deployed on Netlify; and a case-interview practice grader that transcribes a recorded practice case, measures pace, filler words, hedges, and pauses, grades it against a seven-dimension rubric with quoted evidence, and keeps a running ledger across sessions.",
+      "annotation": {"what": null, "why": null, "breaks": null, "learned": null}
+    },
+    {
+      "id": "cpsc415-labs",
+      "name": "AI Integration coursework (CPSC 415, Fall 2026)",
+      "kind": "course labs",
+      "status": "shipped",
+      "summary": "Weekly labs built with a coding agent and documented through intent, spec, and decision logs: a single-page memorization trainer (week 1); a command-line chat client that reports model and token use (week 2); a support-message classifier with structured JSON output and a five-case eval comparing two models (week 3).",
+      "links": [
+        "https://github.com/lanefaison1-del/cpsc415-week01",
+        "https://github.com/lanefaison1-del/cpsc415-week02",
+        "https://github.com/lanefaison1-del/cpsc415-week03"
+      ],
+      "annotation": {"what": null, "why": null, "breaks": null, "learned": null}
+    },
+    {
+      "id": "mtc",
+      "name": "President, Mark Twain Center for the Study of Human Freedom (Trinity)",
+      "kind": "leadership",
+      "status": "ongoing",
+      "summary": "Leads an endowed student organization focused on liberty and free-market ideas; recruits outside speakers, including alumni and public figures, and runs talks followed by receptions.",
+      "annotation": {"what": null, "why": null, "breaks": null, "learned": null}
+    }
+  ],
+  "skills": [
+    {"name": "Commercial due diligence and market and revenue modeling", "evidence": ["rsa"]},
+    {"name": "Defense market research: DoD budget documents and contract and program data (DACIS, GovWin IQ, FPDS-NG, SAM.gov, USAspending)", "evidence": ["defense-toolkit", "rsa"]},
+    {"name": "Building AI tools by specifying, directing, and verifying coding agents (Claude Code), including small evals", "evidence": ["rsa-ai-tools", "defense-toolkit", "ppt-automation", "interview-prep", "cpsc415-labs"]},
+    {"name": "Thermal-fluid design trade studies", "evidence": ["capstone"]},
+    {"name": "Supplier-delay management and customer communication in aerospace manufacturing", "evidence": ["hanwha"]},
+    {"name": "Leading student organizations and running a speaker program", "evidence": ["mtc"]},
+    {"name": "Domain familiarity through client work: UAS and counter-UAS, directed energy, space systems, defense acquisition", "evidence": ["rsa", "defense-toolkit"]}
+  ],
+  "learning": [
+    {"name": "AI integration (CPSC 415)", "detail": "In progress this semester: retrieval-augmented generation now; vision, image generation, audio, tool use, the Model Context Protocol, and agents later in the term."}
+  ],
+  "not_yet": [
+    {"name": "SQL", "why": "My analysis has lived in spreadsheet models and agent-written Python so far; SQL is the next skill I plan to learn."},
+    {"name": "Writing code by hand", "why": "I build software by specifying it, directing a coding agent, and verifying the result; I have put my time into the specifying and verifying, not into hand-writing syntax."},
+    {"name": "Front-end frameworks (React and similar)", "why": "The web pages I have shipped are plain static pages; nothing I have built has needed a framework yet."},
+    {"name": "Cloud infrastructure and DevOps (AWS, Docker)", "why": "My deployments have been one-step static hosting; I have not run servers or containers."},
+    {"name": "Banking-grade LBO and merger models", "why": "My deal work was commercial diligence and revenue modeling, not transaction or financing models."},
+    {"name": "Venture capital investment memos", "why": "I have done diligence inputs for acquisitions but have not written an investment memo end to end."},
+    {"name": "Accounting", "why": "I have not taken formal accounting coursework; my models have stopped at revenue rather than the full financial statements."}
+  ]
+}
