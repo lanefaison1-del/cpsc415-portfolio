@@ -13,7 +13,7 @@ Anyone deciding whether to work with Lane, treated the same: recruiters and hiri
   - One background line: former president of Club Tennis and the ASME chapter, Entrepreneurship Club executive board.
   - Light personal detail: a semester in Rome, functional Italian, tennis.
   - Not yet: SQL; writing code by hand; front-end frameworks; cloud infrastructure and DevOps; banking-grade LBO and merger models; venture capital investment memos; accounting.
-- **Never on the site or in an answer:** client or deal names and any confidential client work; post-graduation plans (for now); phone number, home address, birth date.
+- **Never on the site or in an answer:** client or deal names and any confidential client work; post-graduation plans (for now); phone number, home address, birth date, GPA.
 - **Voice:** the assistant speaks about Lane in the third person, as his site's assistant.
 - **Contact:** lanefaison1@gmail.com and LinkedIn.
 - **Model access:** OpenRouter, using the same key as the course labs. When deployed, the key lives in the host's secret store, never in the repository.
@@ -39,7 +39,6 @@ Anyone deciding whether to work with Lane, treated the same: recruiters and hiri
 ## Open questions
 These don't change the design. Settle them in the profile draft due October 19.
 - LinkedIn URL.
-- Whether the profile includes GPA.
 - Dates of the Hanwha Aerospace internship.
 - Which shipped work backs each defense domain area (UAS and counter-UAS, directed energy, space systems, defense acquisition), given that the deal work stays unnamed.
 
