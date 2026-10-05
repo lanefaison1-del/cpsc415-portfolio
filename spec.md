@@ -1,8 +1,5 @@
 # Spec
 
-<!-- The agent writes this from the approved intent. You validate it against the intent.
-     If the spec and the intent disagree, the intent wins until you change the intent. -->
-
 ## Intent
 Implements [`intent/profile-site.md`](intent/profile-site.md), approved October 5, 2026. If this spec and the intent disagree, the intent wins until the intent is changed.
 
@@ -39,7 +36,7 @@ Planned layout. `plan.md` (October 19) confirms the file names and the build ord
 
 ### 1. Profile (`profile/profile.json`)
 - **What it does:** Holds everything the page and the assistant may say about Lane. Its schema is below.
-- **Language:** JSON. **Why:** Python and JavaScript both read it with no library, and Prof. Kousen's site keeps the same kind of data in a JSON file (`data/projects.json`). YAML was the alternative. It allows comments and is easier to edit by hand, but it needs a parser library in both languages, and Lane edits the profile through the agent, not by hand.
+- **Language:** JSON. **Why:** Python and JavaScript both read it with no library, and Prof. Kousen's site keeps the same kind of data in a JSON file (`data/projects.json`). YAML was the alternative. It allows comments and is easier to edit by hand, but it needs a parser library in both languages.
 - **Model:** none.
 - **Interfaces:** read only by `build.py`.
 - **Dependencies:** none.
@@ -60,7 +57,7 @@ Planned layout. `plan.md` (October 19) confirms the file names and the build ord
   - Calls the model through OpenRouter's OpenAI-compatible endpoint.
   - Streams the answer back as plain text.
   - Ported from Kousen's `ask.js` and `_lib.js`. Two differences: it calls OpenRouter instead of OpenAI, and it drops his OpenAI moderation check and his question logging (see Out of scope).
-- **Language:** JavaScript (ES modules) on Cloudflare Pages Functions. **Why:** Lane chose Cloudflare Pages (DECISIONS 2), and Pages Functions run JavaScript. Kousen's tested code carries over almost line for line. Alternatives: Cloudflare's Python Workers (still in beta; Pages Functions themselves run JavaScript), or a FastAPI server on Render (all Python, but a server to keep alive, with slow cold starts). Both were ruled out in DECISIONS 2.
+- **Language:** JavaScript (ES modules) on Cloudflare Pages Functions. **Why:** the site is hosted on Cloudflare Pages, and Pages Functions run JavaScript. Kousen's tested code carries over almost line for line. Alternatives: Cloudflare's Python Workers (still in beta; Pages Functions themselves run JavaScript), or a FastAPI server on Render (all Python, but a server to keep alive, with slow cold starts). Both were ruled out when the host was chosen.
 - **Model:** `xiaomi/mimo-v2.6-flash` through OpenRouter, read from the `CHAT_MODEL` setting, so changing models is a setting, not a code change. Settings: up to 600 output tokens, temperature 0.2, reasoning effort low.
   - **Why:** On October 5, 14 seed adversarial questions went to five models with the draft instructions and the seed profile ([`evidence/model-comparison-2026-10-05.md`](evidence/model-comparison-2026-10-05.md)):
 
@@ -84,7 +81,7 @@ Planned layout. `plan.md` (October 19) confirms the file names and the build ord
   - `POST /api/ask` with body `{"messages": [{"role": "user" | "assistant", "content": "..."}]}`.
   - Success: `200 text/plain` stream of the answer.
   - Errors: JSON `{"error": "..."}` with status 400, 500 or 502. Status 429 comes from the Cloudflare rate-limit rule.
-  - Secret: `OPENROUTER_API_KEY`, held in Cloudflare's secret store. It is the same key as the labs (DECISIONS 1, choice 9B).
+  - Secret: `OPENROUTER_API_KEY`, held in Cloudflare's secret store. It is the same key as the labs.
   - Setting: `CHAT_MODEL`.
 - **Dependencies:** none at run time; it uses standard web APIs (`fetch`, streams). For development only:
   - `wrangler`, Cloudflare's command-line tool, to run the site and its function locally.
@@ -160,7 +157,7 @@ The seed below is what the October 5 model test used ([`evidence/seed-profile.js
 | Interview-preparation tools | project | shipped | Editable behavioral flashcard app on Netlify (no public link) and a case-practice grader | Four annotations |
 | CPSC 415 labs | project | shipped (weeks 1–3) | Memorization trainer, chat client, classifier with a five-case eval; links to the three public repos. Each new week is added when it ships. | Four annotations |
 | Mark Twain Center | project (leadership) | ongoing | President; recruits outside speakers and runs the speaker program | Four annotations |
-| Education, background, personal, contact | person | — | Trinity College, Engineering major, Formal Organizations minor, December 2026; Rome semester; functional Italian; tennis; club leadership line; email and GitHub | LinkedIn URL (GPA stays off, DECISIONS 3) |
+| Education, background, personal, contact | person | — | Trinity College, Engineering major, Formal Organizations minor, December 2026; Rome semester; functional Italian; tennis; club leadership line; email and GitHub | LinkedIn URL (GPA stays off) |
 | Skills | skills | — | Seven skills, each tied to the entries above | Which shipped work backs each defense domain area |
 | Learning | learning | in progress | CPSC 415: retrieval-augmented generation now; vision, audio, tool use, MCP and agents later in the term | — |
 
@@ -285,6 +282,6 @@ Ruled out by this design:
 - **Retrieval (RAG):** the whole profile fits in the prompt at about 3,000 tokens, so retrieval would add a failure mode (fetching the wrong chunk) and no benefit.
 - **Logging visitor questions:** Kousen logs them to a Cloudflare D1 database. Left out for privacy and simplicity; a candidate for a later intent.
 - **A moderation pre-check:** Kousen's uses OpenAI's moderation endpoint, and this site does not call OpenAI.
-- A custom domain, analytics, and `llms.txt` agent files.
+- A custom domain, analytics, and `llms.txt` files.
 
 **Approved by:** Lane Faison, 2026-10-05

@@ -15,7 +15,7 @@ My individual portfolio for CPSC 415 (Trinity College, Fall 2026): a one-page pe
 - The profile is the single source of truth for everything the site and the chatbot say about me. Only confirmed facts go in. Shipped work goes in `experience` or `projects`; work in progress goes in `learning`; skills I've deliberately skipped go in `not_yet`.
 - Every project carries the four-question annotation: what is this, why this choice, what breaks, what I learned.
 - Never put client names, deal names, or confidential client work anywhere in the repository: not in the profile, commit messages, or test cases. Post-graduation plans also stay out for now.
-- Contact on the site is lanefaison1@gmail.com and LinkedIn. Never a phone number, home address, or birth date.
+- Contact on the site is lanefaison1@gmail.com and LinkedIn. Never a phone number, home address, birth date, or GPA.
 - Local scripts (build, eval) are Python, standard library, compatible with Python 3.9. JavaScript only where the platform requires it: the Cloudflare Pages Function and the browser chat widget, with no framework. The language and model for each component are recorded in `spec.md` with alternatives named.
 - Test cases use fictional company names, never real ones.
 - Model calls go through OpenRouter. The key comes from the environment locally and from the host's secret store when deployed, never from code or the repository.
