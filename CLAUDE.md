@@ -20,13 +20,21 @@ My individual portfolio for CPSC 415 (Trinity College, Fall 2026): a one-page pe
 - Test cases use fictional company names, never real ones.
 - Model calls go through OpenRouter. The key comes from the environment locally and from the host's secret store when deployed, never from code or the repository.
 - File names are lowercase with hyphens or underscores.
+- `voice/` runs on Python 3.11 in `.venv`, because the `openrouter` SDK needs 3.10 or later. `build.py` and `eval.py` stay on the Python 3.9 standard-library rule.
 
 ## Working rules
-- Milestone 1 (tag `intent-spec`, October 5) went straight to `main`. From milestone 2 on, every change is one feature on its own branch, merged through a pull request reviewed against `REVIEW.md`. Never commit to `main` directly.
+- Milestone 1 (tag `intent-spec`, October 5) went straight to `main`. From milestone 2 on, every change is one feature on its own branch, merged through a pull request reviewed against `REVIEW.md`. Never commit to `main` directly, except the Week 7 lab below, which the course assigns to `main`.
 - Ensure all commits are authored by Lane Faison.
 - Course requirement: intent and spec come before code, and `plan.md` is approved before implementation starts.
 - Graded course rule: one feature per branch and pull request after the first commit. The order of the branches is in `plan.md`.
 - Never commit `.env` or `.claude/settings.local.json`.
+- Week 7: the spoken interface lives in voice/. Stages assigned: intent, spec,
+  plan, tests. Commit to main.
+- Transcription and speech calls are billed. One transcription per clip, one
+  speech call per answer, never a model call inside a loop of tests. Fixture
+  clips are WAV; expected.json is written by a person before the model hears it.
+- The spoken answer is the chatbot's answer: the refuse-to-fabricate rule
+  applies to what is said aloud exactly as to what is typed.
 
 ## Common mistakes
 Previous bugs to avoid. Add to this list as they happen.
