@@ -285,3 +285,70 @@ Ruled out by this design:
 - A custom domain, analytics, and `llms.txt` files.
 
 **Approved by:** Lane Faison, 2026-10-05
+
+## Week 7: spoken interface
+
+Implements [`intent/voice.md`](intent/voice.md). If this section and that intent disagree, the intent wins until the intent is changed. The typed chatbot in the sections above is not built yet, so this runs as a local server in `voice/` and is ported to the Cloudflare function before November 30.
+
+```
+browser recorder ─> POST /api/voice ─> transcriber ─> answer ─> speaker ─> JSON: transcript, answer, audio, three costs
+typed question   ─> POST /api/ask   ───────────────> answer (the same function)
+```
+
+### 6. Transcriber (`voice/transcribe.py`)
+
+- **What it does:** Sends a recording to OpenRouter's transcription endpoint. Records the text, the audio seconds, the cost per clip, and the seconds the call took.
+- **Language:** Python 3.11. **Why:** the `openrouter` SDK needs 3.10 or later, and this is the language of my labs. Alternative: JavaScript with plain `fetch`, which the Cloudflare port will need. It waits until the hosting decision so this lab tests one thing at a time.
+- **Model:** `openai/whisper-large-v3-turbo` by default. **Why:** the cheapest serious transcriber, priced per second of audio (about $0.00002 for a six-second clip). **Comparison:** `elevenlabs/scribe-v2`, about 18 times the price, which read every course clip correctly on October 26 including the one Whisper got wrong.
+
+### 7. Speaker (`voice/speak.py`)
+
+- **What it does:** Sends the answer to OpenRouter's speech endpoint and writes the audio. Records characters, bytes, cost, and seconds. The reply is audio bytes with no usage object, so the cost is the catalog price times characters and is marked estimated.
+- **Language:** Python 3.11, for the same reason.
+- **Model:** `microsoft/mai-voice-2.1-flash` with voice `en-US-Harper:MAI-Voice-2.1-Flash`. **Why:** priced per character and under a second per call, and the MP3 it returns transcribes correctly. **Comparison:** `elevenlabs/eleven-v4-turbo` with voice `george`, about 2.7 times the price per character.
+
+### 8. Checker (`voice/check.py`)
+
+- **What it does:** Compares a transcript with text a person wrote first. Reports word error rate, the words that had to survive and did not, and an empty transcript.
+- **Language:** Python 3.11, standard library. **Model:** none. It must be something other than the transcriber, because a transcriber cannot check itself.
+
+### 9. Voice server (`voice/server.py`, `voice/answer.py`, `voice/index.html`)
+
+- **What it does:** `POST /api/voice` takes the recording, transcribes it, answers it, speaks the answer, and returns JSON. `POST /api/ask` runs the same answer function on typed text. The page records, has a file picker as the fallback, and shows "I heard: ...". The spoken audio goes back in the reply and is never saved on the server.
+- **Language:** Python 3.11 with the standard library's `http.server`. The browser side is plain JavaScript. **Alternative:** a framework such as Flask, which adds a dependency for two routes.
+- **Answer model:** `xiaomi/mimo-v2.6-flash`, pinned to Xiaomi's endpoint, the model already chosen for this site. Temperature 0.2, reasoning effort low, up to 2,000 output tokens. **Why these settings:** they are the ones tested on October 5, and hidden reasoning counts against the token limit. On November 9, four trial answers to my two clip questions came back complete at both reasoning low and reasoning none. Low stays because it is the setting the adversarial questions were tested on.
+- **Prompt:** `evidence/grounding-draft.md`, a spoken-answer rule, then `profile/profile.json`.
+
+### Dependencies
+
+- `openrouter` (Python SDK): carries the transcription and speech calls and the chat call. **Why:** both audio endpoints are in it, and it runs only in `voice/`. Alternative: plain `urllib`, which means hand-writing the request and error handling for three endpoints.
+- For development only: `pytest` for tests, `ruff` for linting, `playwright` for the browser check.
+
+### Behavior
+
+Numbering continues from the behaviors above.
+
+28. `/api/voice` takes the recording as the body, with the content type naming the format. An unknown type gets status 415 before any billed call.
+29. An empty transcript is a failed transcript, not a crash. The reply says "I didn't catch that." and no answer or speech call is made.
+30. Every turn shows the transcript as "I heard: ...", so a misheard word is visible to the visitor.
+31. A reply that is not audio is an error and is never saved or returned as audio. The visitor still gets the transcript and the written answer.
+32. Expected text is compared in code by word error rate. The tolerance is 0.15 unless a clip states its own with a recorded reason.
+33. Named words, including my name and the course number, must survive, and they count only as whole words. A named word survives when some run of adjacent transcript words joins exactly to it. So "plane" does not count as "Lane", while "boot camp" counts as "bootcamp", "C P S C 415" as "CPSC 415", and the possessive "Faison's" as "Faison". A name that fails is reported even when the rate is within tolerance. A number read as words is a miss. Spacing and case do not count.
+34. The spoken answer is at most three sentences with no markdown. The prompt asks for this and code enforces it, and the page shows exactly what is spoken.
+35. An empty answer is a failed answer. It is reported and never sent to the speech model.
+36. The key stays on the server. The browser sends only audio or typed text, and no response contains the key.
+37. The spoken answer follows the same grounding rules as the typed answer, through the same answer function.
+38. One transcription per clip and one speech call per answer, with no automatic retries. Tests that call a model are skipped when no key is set.
+39. The recorder stops at 30 seconds. The server refuses a body over 10 MB with status 413 instead of cutting it short. When the transcription reports more than 35 seconds of audio, the server stops there: no answer or speech call.
+40. Nothing a visitor sends or receives is stored. The recording, transcript, answer and audio stay in memory for the one request and are never written to disk or logged.
+
+### Cost
+
+| Item | Estimate |
+|---|---|
+| One spoken question on the class models | about $0.005, most of it speech |
+| The lab's billed runs: five clips on two transcribers, two spoken answers, two full turns | about $0.04 |
+
+The per-turn figure measured in `voice/CHECKS.md` goes into the hosting decision before November 30.
+
+**Approved by:** Lane Faison, 2026-11-10
