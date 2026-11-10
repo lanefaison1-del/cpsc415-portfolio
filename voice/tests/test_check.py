@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from check import compare, survives, wer, words  # noqa: E402
+from check import compare, survives, wer, words
 
 SAID = "My name is Lane Faison and I study CPSC 415 at Trinity College."    # 13 words
 
