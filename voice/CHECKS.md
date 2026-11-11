@@ -57,3 +57,42 @@ My two clips were recorded in iPhone Voice Memos (`.m4a`, 48 kHz) and converted 
 **My note after playing both clips and reading both transcripts aloud:** "Yes, got my name right and answered correctly."
 
 **Whisper's audio seconds.** Whisper reported 10.0 seconds for both clips that run between 8 and 10 seconds (my clip 2 is 9.07 s, course clip 2 is 8.06 s) and charged them $0.0000111 per reported second. The three shorter clips came back with their real lengths at $0.0000033 per second. Scribe reported the real length every time.
+
+## The answer, typed and spoken (November 10)
+
+**Typed answer to clip 1's question** through `answer.py` (the function the server uses for both routes): two sentences, 446 characters, finish reason `stop`, $0.00051, 6.2 s. The text is in `answers/answer-clip1.json`:
+
+> Lane's capstone team designed a reusable LN2-cooled conical reentry heat shield to replace the single-use ablative AVCOAT standard, choosing liquid nitrogen flowing through radial pipes over a transpiration-cooled lattice, and built a serpentine cooling-channel rig with a thermocouple grid to validate the thermal models. Lane led the problem framing, the design alternatives and down-select, the final-design justification, and the conclusions.
+
+Every fact in it is in the profile.
+
+**My name misheard.** The same question typed with "Lane Faisan" instead of "Lane Faison": the chatbot answered about me as usual and did not mention the spelling. $0.00052, 5.6 s. A misheard surname does not stop or change an answer, so on a live turn the only place the error shows is "I heard: ..." on the page.
+
+**Spoken twice** with `speak.py`:
+
+| Voice | Model | Characters | Bytes | Length of audio | Cost | Call seconds |
+|---|---|---|---|---|---|---|
+| `en-US-Harper:MAI-Voice-2.1-Flash` (class, default) | `microsoft/mai-voice-2.1-flash` | 446 | 607,680 | 30.4 s | $0.00669 (billed, from the generation record) | 1.6 |
+| `george` (comparison) | `elevenlabs/eleven-v4-turbo` | 446 | 465,649 | 29.0 s | $0.01784 (estimated from the catalog price) | 5.0 |
+
+The files are `answers/answer-harper.mp3` and `answers/answer-george.mp3`. ElevenLabs cost about 2.7 times as much for the same text.
+
+**What each voice did with my name, the course number and the abbreviations.** The answer has no course number in it. My note after listening to both: "Yes, got my name right and answered correctly." I kept Harper as the default. As a machine check, each spoken answer was transcribed back once with `elevenlabs/scribe-v2` ($0.0019 and $0.0018):
+
+| Voice | "Lane" | "LN2" | "AVCOAT" | Word error rate against the text |
+|---|---|---|---|---|
+| Harper | kept, both times | came back as "LN two" | came back as "AV coat", which still counts | 0.091 |
+| George | kept, both times | kept | came back as "AVCO" | 0.015 |
+
+**Finding: three sentences is not short.** The model kept to the sentence limit with two long sentences, which run about 30 seconds aloud. Speech is priced per character, so the answer's length, not the sentence count, sets most of the cost of a turn.
+
+## Lint, with the course files copied in
+
+`transcribe.py` and `speak.py` are the course example's files, copied unchanged. `ruff check .` finds one import-order issue (I001) in `transcribe.py`, left as copied, alongside the PIE810 in `guard.py`. The new files `answer.py` and `tests/test_answer.py` are clean.
+
+## Answer tests (`voice/tests/test_answer.py`, no key, a fake model)
+
+| Run | Result |
+|---|---|
+| Before `answer.py` existed | Collection error: `ModuleNotFoundError: No module named 'answer'` |
+| After `answer.py` | 18 passed with the checker tests, 0.01 s |

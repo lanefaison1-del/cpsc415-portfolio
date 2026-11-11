@@ -1,0 +1,7 @@
+{
+ "text": "Lane's capstone team designed a reusable LN2-cooled conical reentry heat shield to replace the single-use ablative AVCOAT standard, choosing liquid nitrogen flowing through radial pipes over a transpiration-cooled lattice, and built a serpentine cooling-channel rig with a thermocouple grid to validate the thermal models. Lane led the problem framing, the design alternatives and down-select, the final-design justification, and the conclusions.",
+ "model": "xiaomi/mimo-v2.6-flash",
+ "finish_reason": "stop",
+ "cost": 0.0005124,
+ "seconds": 6.2
+}
