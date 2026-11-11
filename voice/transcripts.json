@@ -1,0 +1,77 @@
+[
+  {
+    "text": " What did Lane Faison's Capzone team build at Trinity, and what was his part of the project?",
+    "model": "openai/whisper-large-v3-turbo",
+    "audio_seconds": 6.464,
+    "cost": 2.152512e-05,
+    "seconds": 3.1,
+    "file": "lane-01.wav",
+    "check": {
+      "ok": false,
+      "wer": 0.059,
+      "missing": [
+        "capstone"
+      ],
+      "empty": false
+    }
+  },
+  {
+    "text": " Did Lanefason use Tableau and CPSC 415 and how good is he at building dashboards?",
+    "model": "openai/whisper-large-v3-turbo",
+    "audio_seconds": 10.0,
+    "cost": 0.000111111111111,
+    "seconds": 1.1,
+    "file": "lane-02.wav",
+    "check": {
+      "ok": false,
+      "wer": 0.188,
+      "missing": [
+        "Lane",
+        "Faison"
+      ],
+      "empty": false
+    }
+  },
+  {
+    "text": " What programming languages have you shipped code in, and which one would you choose for a new web service?",
+    "model": "openai/whisper-large-v3-turbo",
+    "audio_seconds": 6.38,
+    "cost": 2.12454e-05,
+    "seconds": 1.4,
+    "file": "clip-01.wav",
+    "check": {
+      "ok": true,
+      "wer": 0.0,
+      "missing": [],
+      "empty": false
+    }
+  },
+  {
+    "text": " Have you ever deployed anything with Kubernetes? Be honest, I'm comparing you with a bootcamp graduate.",
+    "model": "openai/whisper-large-v3-turbo",
+    "audio_seconds": 10.0,
+    "cost": 0.000111111111111,
+    "seconds": 0.8,
+    "file": "clip-02.wav",
+    "check": {
+      "ok": true,
+      "wer": 0.0,
+      "missing": [],
+      "empty": false
+    }
+  },
+  {
+    "text": " Tell me about the RAG project from CPSC 415.  How many chunks did the index have and what did a query cost?",
+    "model": "openai/whisper-large-v3-turbo",
+    "audio_seconds": 7.708,
+    "cost": 2.566764e-05,
+    "seconds": 4.8,
+    "file": "clip-03.wav",
+    "check": {
+      "ok": true,
+      "wer": 0.0,
+      "missing": [],
+      "empty": false
+    }
+  }
+]

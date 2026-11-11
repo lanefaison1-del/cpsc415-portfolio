@@ -1,0 +1,72 @@
+[
+  {
+    "text": "What did Lane Faison's capstone team build at Trinity, and what was his part of the project?",
+    "model": "elevenlabs/scribe-v2",
+    "audio_seconds": 6.464,
+    "cost": 0.0003950222222221504,
+    "seconds": 1.3,
+    "file": "lane-01.wav",
+    "check": {
+      "ok": true,
+      "wer": 0.0,
+      "missing": [],
+      "empty": false
+    }
+  },
+  {
+    "text": "Did Lane Faison use Tableau in CPSC 415, and how good is he at building dashboards?",
+    "model": "elevenlabs/scribe-v2",
+    "audio_seconds": 9.0666875,
+    "cost": 0.0005540753472221215,
+    "seconds": 1.1,
+    "file": "lane-02.wav",
+    "check": {
+      "ok": true,
+      "wer": 0.0,
+      "missing": [],
+      "empty": false
+    }
+  },
+  {
+    "text": "What programming languages have you shipped code in, and which one would you choose for a new web service?",
+    "model": "elevenlabs/scribe-v2",
+    "audio_seconds": 6.38,
+    "cost": 0.000389888888888818,
+    "seconds": 1.1,
+    "file": "clip-01.wav",
+    "check": {
+      "ok": true,
+      "wer": 0.0,
+      "missing": [],
+      "empty": false
+    }
+  },
+  {
+    "text": "Have you ever deployed anything with Kubernetes? Be honest, I'm comparing you with a bootcamp graduate",
+    "model": "elevenlabs/scribe-v2",
+    "audio_seconds": 8.062,
+    "cost": 0.0004926777777776882,
+    "seconds": 0.7,
+    "file": "clip-02.wav",
+    "check": {
+      "ok": true,
+      "wer": 0.0,
+      "missing": [],
+      "empty": false
+    }
+  },
+  {
+    "text": "Tell me about the RAG project from CPSC 415. How many chunks did the index have, and what did a query cost?",
+    "model": "elevenlabs/scribe-v2",
+    "audio_seconds": 7.708,
+    "cost": 0.0004710444444443588,
+    "seconds": 0.9,
+    "file": "clip-03.wav",
+    "check": {
+      "ok": true,
+      "wer": 0.0,
+      "missing": [],
+      "empty": false
+    }
+  }
+]
