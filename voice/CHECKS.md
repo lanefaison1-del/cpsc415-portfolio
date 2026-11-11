@@ -96,3 +96,51 @@ The files are `answers/answer-harper.mp3` and `answers/answer-george.mp3`. Eleve
 |---|---|
 | Before `answer.py` existed | Collection error: `ModuleNotFoundError: No module named 'answer'` |
 | After `answer.py` | 18 passed with the checker tests, 0.01 s |
+
+## The loop: `/api/voice` and the page (November 10)
+
+`server.py` serves the page, `POST /api/voice` and `POST /api/ask`, and both routes call the same `answer()` from `answer.py`. `speak.py` is the course file with one change: `synthesize()` returns the spoken answer in memory, so the server never writes a visitor's audio to disk.
+
+**Server tests** (`voice/tests/test_server.py`, no key, fake models):
+
+| Run | Result |
+|---|---|
+| Before `server.py` existed | Collection error: `ModuleNotFoundError: No module named 'server'` |
+| After `server.py` | 28 passed with the checker and answer tests, 6 billed tests skipped with no key, 5.0 s |
+
+They cover 415 before any billed call, 413 over the size cap, a full turn, the empty transcript, the 35-second stop, the empty answer, a speech reply that is not audio, a provider error carrying a key-shaped string, one answer function for both routes, and no file left behind after a turn.
+
+**Browser check** (`voice/test_browser.py`, Playwright with Chromium, my clip 1 through the page's file picker): 1 passed in 17.9 s. Its last three assertions: no request from the browser carried an `Authorization` header; no request went to OpenRouter; the page called `/api/voice`. That turn cost $0.0000718 to transcribe, $0.0000734 to answer and $0.00873 to speak, $0.0089 in all.
+
+## One turn (November 10)
+
+I used the microphone on the page three times. The server keeps no record of what was said, only seconds and costs, so the first two are known only from those:
+
+| Turn | What happened | Transcription | Answer | Speech |
+|---|---|---|---|---|
+| 1 | A full turn | $0.0000493 | $0.0000835 | $0.00213 |
+| 2 | An empty transcript: no answer or speech call was made (behavior 29) | $0.0000004 | none | none |
+| 3 | The turn recorded below | $0.0000202 | $0.0000631 | $0.005895 |
+
+**The question**, from my test set (seed question q01): "We need someone to write SQL against our deal database from day one. Can Lane do that?"
+
+**I heard:** "We need something to write a SQL. Deal database from day one. Can Lane do that?" Against the question as written, the word error rate is 0.235, and both "Lane" and "SQL" survived. Whisper turned "someone" into "something" and lost "against our", but the words that carry the question came through.
+
+**Answer**, three sentences, spoken by Harper:
+
+> Lane lists SQL as "not yet" — he says his analysis has lived in spreadsheet models and agent-written Python so far, and SQL is the next skill he plans to learn. So he would not write that query by hand today, though he does build software by specifying it and verifying what a coding agent produces. If you want to talk through how he'd approach the schema, email him at lanefaison1@gmail.com.
+
+Every claim in it is in the profile: SQL and writing code by hand are both on the "not yet" list, and the answer gives those reasons rather than claiming the skill. The refuse-to-fabricate rule held aloud.
+
+| Step | Model | Cost | Seconds |
+|---|---|---|---|
+| Transcription | `openai/whisper-large-v3-turbo` | $0.0000202 | 2.5 |
+| Answer | `xiaomi/mimo-v2.6-flash` | $0.0000631 | 4.1 |
+| Speech | `microsoft/mai-voice-2.1-flash`, Harper | $0.005895 | 1.0 |
+| **Total** | | **$0.005978** | **7.6** |
+
+One spoken question costs about six-tenths of a cent, 99% of it speech. This figure goes into the hosting decision in `spec.md` before November 30.
+
+## Lint, final
+
+`ruff check .` finds 2 issues, both in course files left as copied: PIE810 in `.claude/hooks/guard.py` and I001 in `voice/transcribe.py`. Every file written for this lab is clean.

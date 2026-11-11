@@ -5,8 +5,12 @@
     python3 speak.py "Hello from CPSC 415." --model elevenlabs/eleven-v4-turbo --voice george --out hello-11.mp3
 
 The reply is raw audio bytes, not JSON, so there is no usage object in it. The bill is
-in the generation record (X-Generation-Id header), which appears about a minute later;
+in the generation record (X-Generation-Id header), which appears about a minute after the call;
 until then the cost is estimated from the catalog price per character.
+
+The course example's file, with one change for my server: synthesize() returns the audio
+in memory, so a visitor's spoken answer is never written to disk (spec behavior 40).
+speak() calls it and writes the file, as before.
 """
 import argparse
 import json
@@ -25,22 +29,35 @@ DEFAULT_VOICE = "en-US-Harper:MAI-Voice-2.1-Flash"    # the model's voice ids ca
 _PRICES: dict[str, float] = {}
 
 
-def speak(client: OpenRouter, text: str, out: Path, model: str = DEFAULT_MODEL, voice: str = DEFAULT_VOICE) -> dict:
-    """One TTS call. Writes the file (MP3, or WAV when `out` ends in .wav) and returns what the lab
-    records: bytes, seconds, cost, generation id.
-
-    Why WAV exists here: on October 26 the MP3s from two per-character models carried a wrong length
-    in their header, and Whisper's host trusted it and transcribed only the first half of each clip,
-    while Scribe read the whole thing. Raw PCM has no header to be wrong; `wave` writes a correct one."""
-    fmt = "pcm" if out.suffix.lower() == ".wav" else "mp3"
+def synthesize(client: OpenRouter, text: str, model: str = DEFAULT_MODEL, voice: str = DEFAULT_VOICE,
+               fmt: str = "mp3") -> tuple[bytes, dict]:
+    """One TTS call, kept in memory. Returns the audio bytes and what is recorded: characters,
+    bytes, seconds, cost. A reply that is not audio raises, so an error body is never used as audio."""
     t0 = time.time()
     r = client.tts.create_speech(model=model, input=text, voice=voice, response_format=fmt)
     data = r.read()                                  # the SDK hands back a streaming httpx response
     seconds = round(time.time() - t0, 1)
     ctype = r.headers.get("content-type", "")
-    if not ctype.startswith("audio/"):               # an error body is JSON; never save JSON as audio
+    if not ctype.startswith("audio/"):               # an error body is JSON; never treat JSON as audio
         raise RuntimeError(f"expected audio, got {ctype}: {data[:300]!r}")
+    gen_id = r.headers.get("x-generation-id")
+    billed = cost_of(client, gen_id)
+    return data, {"model": model, "voice": voice, "chars": len(text), "bytes": len(data), "seconds": seconds,
+                  "content_type": ctype, "generation_id": gen_id,
+                  "cost": billed if billed is not None else estimate(model, len(text)),
+                  "cost_is_estimate": billed is None}
+
+
+def speak(client: OpenRouter, text: str, out: Path, model: str = DEFAULT_MODEL, voice: str = DEFAULT_VOICE) -> dict:
+    """One TTS call written to a file (MP3, or WAV when `out` ends in .wav).
+
+    Why WAV exists here: on October 26 the MP3s from two per-character models carried a wrong length
+    in their header, and Whisper's host trusted it and transcribed only the first half of each clip,
+    while Scribe read the whole thing. Raw PCM has no header to be wrong; `wave` writes a correct one."""
+    fmt = "pcm" if out.suffix.lower() == ".wav" else "mp3"
+    data, info = synthesize(client, text, model, voice, fmt)
     if fmt == "pcm":                                 # "audio/pcm;rate=24000;channels=1" says how to frame it
+        ctype = info["content_type"]
         rate = int((re.search(r"rate=(\d+)", ctype) or ["", "24000"])[1])
         channels = int((re.search(r"channels=(\d+)", ctype) or ["", "1"])[1])
         with wave.open(str(out), "wb") as w:
@@ -50,11 +67,7 @@ def speak(client: OpenRouter, text: str, out: Path, model: str = DEFAULT_MODEL, 
             w.writeframes(data)
     else:
         out.write_bytes(data)
-    gen_id = r.headers.get("x-generation-id")
-    billed = cost_of(client, gen_id)
-    return {"file": str(out), "model": model, "voice": voice, "chars": len(text), "bytes": len(data),
-            "seconds": seconds, "generation_id": gen_id,
-            "cost": billed if billed is not None else estimate(model, len(text)), "cost_is_estimate": billed is None}
+    return {"file": str(out), **info}
 
 
 def cost_of(client: OpenRouter, gen_id: str | None) -> float | None:

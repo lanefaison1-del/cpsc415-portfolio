@@ -6,9 +6,9 @@ My individual portfolio for CPSC 415 (Trinity College, Fall 2026): a one-page pe
 ## Commands
 ```
 # build: not yet (plan.md step 3: python3 build.py)
-# test:  not yet (plan.md steps 3-5)
-# run:   not yet (plan.md step 4)
-# lint:  not yet
+# test:  .venv/bin/python -m pytest voice/tests      (no key needed; the site's own tests come in plan.md steps 3-5)
+# run:   cd voice && ../.venv/bin/python server.py   (the voice server at http://localhost:8000; needs OPENROUTER_API_KEY)
+# lint:  .venv/bin/ruff check .
 ```
 
 ## Conventions

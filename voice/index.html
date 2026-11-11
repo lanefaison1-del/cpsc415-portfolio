@@ -1,0 +1,81 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask about Lane by voice</title>
+<style>
+  body{font:18px system-ui,sans-serif;max-width:42rem;margin:3rem auto;padding:0 1rem;line-height:1.45;color:#111;background:#fff}
+  button{font:inherit;padding:.5rem 1rem} #rec[data-on="1"]{background:#b00;color:#fff}
+  pre{white-space:pre-wrap;background:#f4f6f8;padding:1rem;font:inherit} .small{color:#555;font-size:.9em}
+</style>
+<h1>Ask about Lane by voice</h1>
+<p>Hold the button and ask a question about Lane's work. The answer comes only from his profile and is read aloud by a synthetic voice. Your browser sends only the recording; recordings stop after 30 seconds and are not kept.</p>
+<p>
+  <button id="rec">Hold to talk</button>
+  &nbsp; or upload a clip: <input id="file" type="file" accept="audio/*"> <button id="send">Ask</button>
+</p>
+<p class="small"><label>Or type a question: <input id="q" size="36"></label> <button id="askText">Ask by text</button></p>
+<pre id="out" aria-live="polite"></pre>
+<audio id="player" controls hidden></audio>
+<script>
+const LIMIT_MS = 30000;
+const out = document.getElementById("out"), player = document.getElementById("player"), rec = document.getElementById("rec");
+const TYPE = window.MediaRecorder && MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+
+async function post(path, body, type, typed) {
+  out.textContent = "…";
+  player.hidden = true;
+  try {
+    const res = await fetch(path, { method: "POST", headers: { "Content-Type": type }, body });
+    show(await res.json(), res.status, typed);
+  } catch (e) {
+    out.textContent = "The server could not be reached.";
+  }
+}
+
+function show(d, status, typed) {
+  if (status !== 200) { out.textContent = `Error ${status}: ${d.error}`; return; }
+  const c = d.cost || {}, s = d.seconds || {};
+  const lines = [`${typed ? "You asked" : "I heard"}: ${d.transcript || "(nothing)"}`];
+  if (d.answer) lines.push(`Answer: ${d.answer}`);
+  if (d.error) lines.push(`(${d.error})`);
+  lines.push(`[cost: transcription $${c.stt ?? 0} · answer $${c.chat ?? 0} · speech $${c.tts ?? 0}` +
+             `  ·  seconds: ${s.stt ?? 0} + ${s.chat ?? 0} + ${s.tts ?? 0}]`);
+  out.textContent = lines.join("\n\n");
+  if (d.audio_b64) { player.src = "data:audio/mpeg;base64," + d.audio_b64; player.hidden = false; player.play(); }
+}
+
+// Hold to talk; the recording stops by itself at 30 seconds.
+let recorder, chunks = [], timer;
+async function start() {
+  if (recorder && recorder.state === "recording") return;
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  recorder = new MediaRecorder(stream, { mimeType: TYPE });
+  chunks = [];
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.onstop = () => {
+    clearTimeout(timer);
+    stream.getTracks().forEach(t => t.stop());
+    post("/api/voice", new Blob(chunks, { type: TYPE }), TYPE, false);
+  };
+  recorder.start();
+  rec.dataset.on = "1"; rec.textContent = "Listening… release to send";
+  timer = setTimeout(stop, LIMIT_MS);
+}
+function stop() {
+  if (recorder && recorder.state === "recording") recorder.stop();
+  rec.dataset.on = ""; rec.textContent = "Hold to talk";
+}
+rec.onmousedown = start; rec.onmouseup = stop; rec.onmouseleave = stop;
+rec.ontouchstart = e => { e.preventDefault(); start(); }; rec.ontouchend = e => { e.preventDefault(); stop(); };
+rec.onkeydown = e => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); start(); } };
+rec.onkeyup = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); stop(); } };
+
+// The fallback: a clip the visitor picked, sent with its own type.
+document.getElementById("send").onclick = () => {
+  const f = document.getElementById("file").files[0];
+  if (f) post("/api/voice", f, f.type || "audio/mpeg", false);
+};
+document.getElementById("askText").onclick = () => {
+  post("/api/ask", document.getElementById("q").value, "text/plain", true);
+};
+</script>
