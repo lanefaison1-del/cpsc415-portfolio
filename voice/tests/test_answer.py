@@ -89,3 +89,68 @@ def test_the_prompt_is_the_grounding_rules_then_the_spoken_rule_then_the_profile
     assert prompt.index("Rules") < prompt.index(SPOKEN_RULE) < prompt.index(HEADING)
     profile = json.loads(prompt.split(HEADING, 1)[1])
     assert profile["person"]["name"] == "Lane Faison"
+
+
+# ---- Week 8: the tool in the chatbot (spec behaviors 46, 49, 50, 51) ---------------------------
+class ScriptedClient:
+    """Returns scripted replies in order: a tool request first, then an answer."""
+
+    def __init__(self, replies):
+        self.replies, self.sent = list(replies), []
+
+        def send(**kwargs):
+            self.sent.append(kwargs)
+            return self.replies.pop(0)
+        self.chat = SimpleNamespace(send=send)
+
+
+def _tool_request(arguments, call_id="call_1"):
+    tc = SimpleNamespace(id=call_id, function=SimpleNamespace(name="recent_commits", arguments=arguments))
+    message = SimpleNamespace(content="", tool_calls=[tc])
+    return SimpleNamespace(choices=[SimpleNamespace(message=message, finish_reason="tool_calls")],
+                           usage=SimpleNamespace(cost=0.0001))
+
+
+def _answer(text):
+    message = SimpleNamespace(content=text, tool_calls=None)
+    return SimpleNamespace(choices=[SimpleNamespace(message=message, finish_reason="stop")],
+                           usage=SimpleNamespace(cost=0.0001))
+
+
+@pytest.fixture
+def no_network(monkeypatch):
+    import github
+    monkeypatch.setattr(github, "_fetch", lambda url: (200, [{"sha": "042f79e8a1", "commit": {
+        "author": {"date": "2026-11-16T22:01:00Z"}, "message": "Week 8 working rules"}}]))
+
+
+def test_the_answer_carries_the_tool_and_returns_the_trace(no_network):
+    client = ScriptedClient([_tool_request('{"repo": "lanefaison1-del/cpsc415-portfolio"}'),
+                             _answer("**Lane's** latest portfolio commit is Week 8 working rules, on 2026-11-16.")])
+    reply = answer(client, "What has Lane committed lately?")
+    assert client.sent[0]["tools"][0]["function"]["name"] == "recent_commits"
+    assert reply["text"] == "Lane's latest portfolio commit is Week 8 working rules, on 2026-11-16."
+    assert reply["trace"][0]["tool"] == "recent_commits" and reply["calls"] == ["recent_commits"]
+    assert reply["cost"] == pytest.approx(0.0002)
+
+
+def test_an_unsupported_claim_never_reaches_the_visitor(no_network):
+    reply = answer(ScriptedClient([_answer("Yesterday Lane pushed 9fe01ab to cpsc415-portfolio.")]), "q")
+    import loop
+    assert reply["text"] == loop.HELD_ANSWER
+    assert reply["held_back"].startswith("Yesterday") and not reply["check"]["supported"]
+
+
+def test_the_prompt_tells_the_model_about_the_tool_and_today():
+    prompt = system_prompt(today="2026-11-17")
+    assert "recent_commits" in prompt and "2026-11-17" in prompt and "2026-11-16" in prompt
+    assert prompt.index(SPOKEN_RULE) < prompt.index("recent_commits") < prompt.index(HEADING)
+
+
+def test_the_typed_route_returns_the_trace(no_network):
+    import server
+    client = ScriptedClient([_tool_request('{"repo": "lanefaison1-del/cpsc415-portfolio"}'),
+                             _answer("Lane's latest commit is Week 8 working rules.")])
+    reply = server.typed_turn(client, "What has Lane committed lately?")
+    assert reply["trace"][0]["result"]["repo"] == "lanefaison1-del/cpsc415-portfolio"
+    assert "sk-or-v1" not in json.dumps(reply)
