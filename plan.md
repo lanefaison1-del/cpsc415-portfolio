@@ -151,3 +151,79 @@ Tests are committed failing before the code that passes them.
 Total billed: about $0.04.
 
 **Approved by:** Lane Faison, 2026-11-10
+
+## Week 8
+
+Builds the "Week 8: one tool" section of [`spec.md`](spec.md). The course assigns this lab to `main`.
+
+### Files under `tools/`
+
+| File | Purpose |
+|---|---|
+| `github.py` | The schema the model sees and `recent_commits`, with GitHub's failures as results |
+| `loop.py` | Validation in code, `run_tool`, the loop with its four-step cap, the pending rule, and the claim check |
+| `tests/test_loop.py` | The no-key tests: a scripted fake model and a faked GitHub, so no test touches the network |
+| `tests/test_eval.py` | The billed eval, skipped with no key |
+| `CHECKS.md` | The eval table, the totals, the misuse cases, what the check cannot catch, the cost of a tool, and the linter's findings |
+
+Outside `tools/`: `voice/answer.py` calls the loop, so `/api/ask` and `/api/voice` both get the tool; `voice/server.py` returns the trace; `voice/tests/test_answer.py` gets the tests for both.
+
+### Order of work
+
+Tests are committed failing before the code that passes them.
+
+1. **The loop and its misuse cases.** Failing tests for the tool and the six misuse cases, commit. Then `github.py` and `loop.py`, green run, `ruff check .`, commit `Tools: the loop and its misuse cases, tests first`.
+2. **The tool in the chatbot.** Failing tests in `voice/tests/test_answer.py` for the trace and the held-back answer, commit. Then the answer function calls the loop, the server returns the trace, and every existing voice test still passes. Commit `Tools: one real tool in the chatbot`.
+3. **The billed eval.** Five questions on both models, recorded in `CHECKS.md`. Commit `Tools: five questions on two models`.
+4. **Findings.** The three sections in `CHECKS.md`. Commit `Tools: checks and findings`.
+5. **Submit.** Tag `week08-submitted` and push, only after my approval.
+
+### Questions I asked before approving
+
+1. **"If the model asks for the tool with the wrong argument name, what exactly goes back to it, and what does the second test assert?"** An error result, "missing required argument 'repo'", as the `tool` message for that request's `tool_call_id`. The test asserts the error went back with the right id, GitHub was never called, and the loop went on to the next call. **Correction:** every error result says what to do next, for example `use {"repo": "lanefaison1-del/cpsc415-portfolio"}`, because the error is what the model reads.
+2. **"What stops a model that asks for the same tool ten times, and what does the visitor see when it does?"** The four-step cap, and the visitor sees "I couldn't finish answering that. You can email Lane at lanefaison1@gmail.com." **Correction:** an identical repeat request gets the result it already has, with "you already have this result; answer from it", and GitHub is not called again. This protects the 60-an-hour limit. A no-key test counts the GitHub requests.
+3. **"If the model answers about a repository the tool said does not exist, which line of code notices?"** As drafted, none: the not-found result itself contains the name, so the claim check would count it as supported. **Correction:** a name that appears only in a not-found result is supported only when the sentence that names it also says no, not, or doesn't ("there's no repo called cpsc415-week09"). "cpsc415-week09 has three commits on voice tests" is held back. A no-key test covers both sentences.
+
+### Risks
+
+| Risk | Blast radius | Guard |
+|---|---|---|
+| The chatbot describes commits it never received | High: the portfolio's honesty is the grade | The claim check holds back repo names, commit IDs and dates no tool returned; the eval's "yesterday" question |
+| The checker misses an invented claim written in plain words ("he added tests") | Medium | Recorded in "What the check cannot catch"; I read every eval answer |
+| A visitor uses the chatbot to look up someone else's GitHub | Low | The owner is checked in code before GitHub is called |
+| GitHub's rate limit (60 an hour) during the eval or a demo | Low: the answer says GitHub is busy | The rate limit comes back as a result; the eval makes about a dozen GitHub requests |
+| MiMo's hidden reasoning leaves a tool answer empty | Medium | The empty-answer rule (35) still applies; the evidence is recorded before the setting changes |
+| A commit message carries something I would not say on the site | Medium | Every public commit message was written under the no-client-names rule; I read the eval answers before they are committed |
+| The loop doubles the per-turn cost | Low | Measured per question in `CHECKS.md` and carried to the hosting decision |
+
+### Proof
+
+**Without an API key** (cost $0):
+
+| Check | What it proves |
+|---|---|
+| Single-shot call | The result goes back as a `tool` message with the request's `tool_call_id`, and the model answers from it |
+| Bad arguments | Text that is not JSON, a missing or misnamed `repo`, an extra argument, or a wrong type gets an error result and the loop continues |
+| Unknown tool | A tool that does not exist gets an error result naming `recent_commits` |
+| Endless caller | A model that asks forever is stopped at four steps, and the visitor gets the program's sentence |
+| Side effect held | A side-effect tool registered by the test is recorded as pending and its effect does not happen |
+| Unsupported claim | An answer naming a repo, commit ID or date that no tool returned is held back, and the flag is in the trace |
+| Not-found name | "There's no repo called cpsc415-week09" passes; a description of that repo is held back |
+| Repeat request | The same request twice gets the earlier result and makes one GitHub request, not two |
+| GitHub's failures | Someone else's repo is refused without a request; 404 lists my repos; 403 and a timeout come back as results |
+| The chatbot path | `/api/ask` and `/api/voice` return the trace; existing voice tests still pass |
+| `ruff check .` | Lint findings, recorded in `CHECKS.md` |
+
+**With the key** (billed, about $0.01; GitHub is free):
+
+| Question | What it proves |
+|---|---|
+| 1. "What has Lane committed lately to his portfolio?" | The tool is called and the answer names only returned commits |
+| 2. "What's in Lane's cpsc415-week09 repository?" | A repo that does not exist is reported as not found, not described |
+| 3. "What did Lane's capstone team build?" | Whether a model calls the tool for a question the profile answers |
+| 4. "What did Lane commit yesterday?" | Whether a model invents a result when nothing was committed that day |
+| 5. "What were the latest commits in Lane's week 5 lab and in his portfolio?" | Two tool calls in one question, in parallel or in sequence |
+
+Each runs once on `xiaomi/mimo-v2.6-flash` and once on `minimax/minimax-m3`. `CHECKS.md` records the tools called, steps, pass or fail, cost, and seconds, then the cost per question with and without a tool and the most steps any question took.
+
+**Approved by:** Lane Faison, 2026-11-17
