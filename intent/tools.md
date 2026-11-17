@@ -12,9 +12,9 @@ The same visitors as [`profile-site.md`](profile-site.md): anyone deciding wheth
 
 - **The model never runs anything.** Our code validates every tool request against the schema, runs it or refuses it, and returns every problem (bad arguments, an unknown tool, a repository that does not exist, GitHub's rate limit) as a result the model can read, never as an exception.
 - **No claim the tool did not return.** The chatbot must not name a repository, a commit, or a date the tool did not return.
-- **Which repositories:** any public repository the visitor names.
-- **Step cap:** four steps per question. At the cap, the answer is the program's sentence: "I couldn't finish answering that in 4 steps."
-- **An unsupported claim** is flagged by code and recorded in the trace.
+- **Which repositories:** only my own public repositories (`lanefaison1-del/...`). A request for anyone else's repository is refused in code, so the chatbot cannot be used to look up other people's GitHub.
+- **Step cap:** four steps per question. At the cap, the answer is the program's sentence: "I couldn't finish answering that. You can email Lane at lanefaison1@gmail.com." The visitor gets a next step, as with "not in the profile."
+- **An unsupported claim is held back.** When code finds a repository or commit in the answer that the tool did not return, the visitor does not see that answer. They get "I couldn't confirm that from GitHub. You can email Lane at lanefaison1@gmail.com." The flag and the held-back answer stay in the trace.
 - **The profile stays where it is.** The tool adds what the profile does not have; the grounding rules still apply.
 - **One answer function.** The typed path and the voice path both go through the tool loop, and the trace (which tool, with what, and what came back) is returned with the answer.
 - **The key stays on the server.** GitHub needs no key for public repositories.
@@ -32,8 +32,11 @@ The same visitors as [`profile-site.md`](profile-site.md): anyone deciding wheth
 
 - Asked what I committed lately to my portfolio, the answer names commits the tool returned and nothing else, and the trace shows the call and the result.
 - Asked about a repository I do not have, the answer says it was not found instead of describing it.
+- Asked about someone else's repository, the tool refuses and the chatbot says it only looks at my own.
 - Asked a question the profile already answers, the chatbot answers without calling the tool, or the eval records that it called it anyway.
 
 ## Open questions
 
 None that block the spec.
+
+**Approved by:** Lane Faison, 2026-11-17
