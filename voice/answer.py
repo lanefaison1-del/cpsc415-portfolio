@@ -2,11 +2,13 @@
 
     python3 answer.py "What did Lane's capstone team build?"      # needs OPENROUTER_API_KEY
 
-The instructions are the October 5 grounding rules, a spoken-answer rule, and the profile.
-The reply is cut to at most three sentences with markdown removed, so what the page shows is
-exactly what is spoken. An empty reply is a failure and is never spoken.
-Spec behaviors 34, 35 and 37.
+The instructions are the October 5 grounding rules, a spoken-answer rule, the tool rule, and the
+profile. The question goes through the tool loop in tools/loop.py, so the model can ask for
+recent_commits. The reply is cut to at most three sentences with markdown removed, so what the
+page shows is exactly what is spoken and exactly what the claim check reads. An empty reply is a
+failure and is never spoken. Spec behaviors 34, 35, 37 and 49 to 51.
 """
+import datetime
 import json
 import os
 import re
@@ -15,6 +17,9 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+import loop  # the tool loop lives in tools/ (spec component 10)
+
 CHAT_MODEL = os.environ.get("CHAT_MODEL", "xiaomi/mimo-v2.6-flash")
 HEADING = "LANE'S PROFILE (JSON)"
 SPOKEN_RULE = ("Spoken answer rule: this answer will be read aloud. This overrides the length and list "
@@ -33,13 +38,25 @@ class EmptyAnswer(Exception):
     """The model returned nothing to say. Reported to the visitor, never sent to the speech model."""
 
 
-def system_prompt(root: Path = ROOT) -> str:
-    """Grounding rules, then the spoken-answer rule, then the profile."""
+def tool_rule(today: str | None = None) -> str:
+    """What the model is told about the tool, with today's and yesterday's dates from the clock."""
+    day = datetime.date.fromisoformat(today) if today else datetime.date.today()
+    return ("Tool rule: the recent_commits tool returns the latest commits in Lane's public GitHub "
+            "repositories. Call it before saying anything about what Lane has committed or worked on lately. "
+            "Facts about his commits and repositories may come from its results as well as the profile, and "
+            "nowhere else: never state a repository, commit, or date that a result did not contain. If a result "
+            f"says a repository was not found, say so plainly. Today is {day.isoformat()}; yesterday was "
+            f"{(day - datetime.timedelta(days=1)).isoformat()}.")
+
+
+def system_prompt(root: Path = ROOT, today: str | None = None) -> str:
+    """Grounding rules, then the spoken-answer rule and the tool rule, then the profile."""
     rules = (root / "evidence" / "grounding-draft.md").read_text(encoding="utf-8")
     if rules.count(HEADING) != 1:
         raise ValueError(f"the grounding rules must contain {HEADING!r} exactly once")
     profile = json.loads((root / "profile" / "profile.json").read_text(encoding="utf-8"))
-    return rules.replace(HEADING, SPOKEN_RULE + "\n\n" + HEADING) + "\n" + json.dumps(profile, indent=1)
+    rules = rules.replace(HEADING, SPOKEN_RULE + "\n\n" + tool_rule(today) + "\n\n" + HEADING)
+    return rules + "\n" + json.dumps(profile, indent=1)
 
 
 def sentences(text: str) -> list[str]:
@@ -69,20 +86,21 @@ def spoken(text: str | None) -> str:
 
 
 def answer(client, question: str, model: str = CHAT_MODEL) -> dict:
-    """One chat call. Returns the cleaned answer and what CHECKS.md records."""
+    """One question through the tool loop. Returns the cleaned answer, the trace, and what CHECKS.md
+    records. The check reads exactly what would be spoken (behaviors 34, 49 and 50)."""
     t0 = time.time()
+    prompt = system_prompt()
     request = {"model": model, "max_tokens": 2000, "temperature": 0.2, "reasoning": {"effort": "low"},
-               "messages": [{"role": "system", "content": system_prompt()},
+               "messages": [{"role": "system", "content": prompt},
                             {"role": "user", "content": question}]}
     if model.startswith("xiaomi/"):
         request["provider"] = {"order": ["xiaomi"], "allow_fallbacks": False}   # pinned, as the spec says
-    r = client.chat.send(**request)
-    choice = r.choices[0]
-    text = spoken(choice.message.content)
-    if not text:
-        raise EmptyAnswer(f"the model returned no answer (finish reason: {choice.finish_reason})")
-    return {"text": text, "model": model, "finish_reason": choice.finish_reason,
-            "cost": getattr(r.usage, "cost", None), "seconds": round(time.time() - t0, 1)}
+    r = loop.run(client, request, known_text=prompt, clean=spoken)
+    if not r["answer"]:
+        raise EmptyAnswer(f"the model returned no answer (finish reason: {r['finish_reason']})")
+    return {"text": r["answer"], "model": model, "finish_reason": r["finish_reason"], "cost": r["cost"],
+            "seconds": round(time.time() - t0, 1), "trace": r["steps"], "calls": r["calls"],
+            "stopped_by": r["stopped_by"], "check": r["check"], "held_back": r["held_back"]}
 
 
 if __name__ == "__main__":

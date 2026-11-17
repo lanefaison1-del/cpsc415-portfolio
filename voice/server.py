@@ -46,7 +46,7 @@ def voice_turn(client, audio: bytes, fmt: str) -> dict:
     """Hear, think, speak, once. Each step can stop the turn without the steps after it being billed."""
     heard = transcribe(client, audio, fmt, STT_MODEL)
     question = (heard["text"] or "").strip()
-    reply = {"transcript": question, "answer": None, "audio_b64": None, "error": None,
+    reply = {"transcript": question, "answer": None, "audio_b64": None, "error": None, "trace": [],
              "cost": {"stt": heard["cost"], "chat": 0, "tts": 0},
              "seconds": {"stt": heard["seconds"], "chat": 0, "tts": 0}}
     if not words(question):                                        # behavior 29
@@ -60,7 +60,7 @@ def voice_turn(client, audio: bytes, fmt: str) -> dict:
     except EmptyAnswer as e:                                       # behavior 35
         reply["error"] = f"I couldn't put an answer together: {e}. Please ask again."
         return reply
-    reply["answer"] = said["text"]
+    reply["answer"], reply["trace"] = said["text"], said["trace"]                # behavior 51
     reply["cost"]["chat"], reply["seconds"]["chat"] = said["cost"], said["seconds"]
     try:
         spoken, info = synthesize(client, said["text"], TTS_MODEL, TTS_VOICE)
@@ -73,14 +73,14 @@ def voice_turn(client, audio: bytes, fmt: str) -> dict:
 
 
 def typed_turn(client, question: str) -> dict:
-    reply = {"transcript": question, "answer": None, "audio_b64": None, "error": None,
+    reply = {"transcript": question, "answer": None, "audio_b64": None, "error": None, "trace": [],
              "cost": {"stt": 0, "chat": 0, "tts": 0}, "seconds": {"stt": 0, "chat": 0, "tts": 0}}
     try:
         said = answer(client, question)
     except EmptyAnswer as e:
         reply["error"] = f"I couldn't put an answer together: {e}. Please ask again."
         return reply
-    reply["answer"] = said["text"]
+    reply["answer"], reply["trace"] = said["text"], said["trace"]                # behavior 51
     reply["cost"]["chat"], reply["seconds"]["chat"] = said["cost"], said["seconds"]
     return reply
 
