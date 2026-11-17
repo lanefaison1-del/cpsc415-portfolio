@@ -367,7 +367,7 @@ question ─> answer() ─> chat call (with the tool schema) ─┬─> text: ch
 
 - **What it does:** `github.py` holds the schema the model sees and the `recent_commits` function. `loop.py` validates every request against the schema in code, runs the tool or refuses it, sends every problem back as a result, stops at the step cap, holds any side-effect tool as pending, and checks the final answer for claims no tool returned. It returns the answer with the trace.
 - **Language:** Python 3.11 in `.venv`. **Why:** it plugs into `voice/answer.py`, which already uses the `openrouter` SDK, and GitHub's REST API needs only `urllib` from the standard library. **Alternative:** JavaScript in the Cloudflare function, which the port will need. It waits for the hosting decision, as the voice route did.
-- **Model:** `xiaomi/mimo-v2.6-flash`, pinned to Xiaomi's endpoint, the model already chosen for this site. **Comparison:** `minimax/minimax-m3`, the other class model. OpenRouter lists both with tool support (checked November 17). The billed eval runs every question on both.
+- **Model:** `xiaomi/mimo-v2.6-flash`, pinned to Xiaomi's endpoint, the model already chosen for this site. **Comparison:** `minimax/minimax-m3`, the other class model. OpenRouter lists both with tool support (checked November 17). The billed eval runs every question on both. MiMo keeps reasoning effort low, the setting the adversarial questions passed on; if a tool answer comes back empty, the evidence is recorded before the setting changes.
 - **Tool:** `recent_commits(repo, count)`, the last commits of one of my public GitHub repositories. No key: GitHub allows 60 unauthenticated requests an hour per address.
 
 ### Behavior
@@ -378,11 +378,11 @@ Numbering continues from the behaviors above.
 42. The model's `arguments` arrive as a JSON string. Code parses them. Text that is not JSON, a missing `repo`, an argument the schema does not list, or a value of the wrong type gets an error result that says what was wrong, and the loop continues.
 43. A repository whose owner is not `lanefaison1-del` is refused in code with an error result saying the chatbot only looks at Lane's own repositories. GitHub is never called for it.
 44. A call to a tool that does not exist gets an error result naming the tools that do, and the loop continues.
-45. GitHub's failures come back as results, never exceptions: a repository that does not exist (404), the rate limit (403), or no answer within 20 seconds.
+45. GitHub's failures come back as results, never exceptions: a repository that does not exist (404), the rate limit (403), or no answer within 20 seconds. A not-found result also lists my public repositories, from one more unauthenticated GitHub request, so the model can retry with the right name instead of giving up.
 46. The loop stops at four steps. At the cap, the visitor gets the program's sentence, "I couldn't finish answering that. You can email Lane at lanefaison1@gmail.com.", never the model's text.
 47. A tool marked as having a side effect is recorded as pending, and its effect does not happen unless a person confirms. The chatbot ships no such tool. A test registers one to prove the rule.
 48. Every tool result goes back as a `tool` message carrying the `tool_call_id` of the request it answers. Two requests in one reply each get their own result.
-49. Code checks the final answer for repository names (`cpsc415-...` or `lanefaison1-del/...`) that no tool result and no profile text contains. An answer with an unsupported claim is held back: the visitor gets "I couldn't confirm that from GitHub. You can email Lane at lanefaison1@gmail.com." The held-back answer and the flag stay in the trace.
+49. Code checks the final answer for three kinds of claim that no tool result and no profile text contains: repository names (`cpsc415-...` or `lanefaison1-del/...`), commit IDs (7 to 40 hexadecimal characters with at least one digit), and dates (`2026-11-16`, `November 16`, `Nov 16`). An answer with an unsupported claim is held back: the visitor gets "I couldn't confirm that from GitHub. You can email Lane at lanefaison1@gmail.com." The held-back answer and the flag stay in the trace.
 50. The answer still follows behaviors 1 to 14 and the spoken-answer rule (34): at most three sentences, no markdown, the same function for typed and spoken questions.
 51. The trace (each step's tool, arguments, result and seconds) is returned with the answer by `/api/ask` and `/api/voice`. It never contains the key.
 52. Every tool request costs one more chat call. The eval records the calls, steps and cost of each question. Tests that call a model are skipped when no key is set.
@@ -397,3 +397,4 @@ Numbering continues from the behaviors above.
 
 The measured figures in `tools/CHECKS.md` join the per-turn cost in the hosting decision before November 30.
 
+**Approved by:** Lane Faison, 2026-11-17
